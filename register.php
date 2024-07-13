@@ -1,4 +1,6 @@
 <?php
+session_start();
+
 require_once __DIR__ ."/vendor/autoload.php";
 require_once __DIR__ ."/incs/db.php";
 require_once __DIR__ ."/incs/functions.php";
@@ -20,9 +22,11 @@ if($_SERVER['REQUEST_METHOD'] === 'POST') {
     ]);
 
     if ($v->validate()) {
-        echo 'OK';
+        if(register($data)) {
+          redirect('login.php');
+        }
     } else {
-        dump($v->errors());
+        $_SESSION['errors'] = get_errors($v->errors());
     }
 }
 ?>
@@ -36,10 +40,15 @@ require_once __DIR__ ."/views/incs/header.tpl.php";
       <div class="row">
         <div class="col-md-6 offset-md-3">
 
-          <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            Error!
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-          </div>
+        <?php if(isset($_SESSION["errors"])): ?>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <?php
+            echo $_SESSION['errors'];
+            unset($_SESSION['errors']);
+          ?>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <?php endif; ?>
 
 		  	<form method="post">
 				<div class="form-floating mb-3">
