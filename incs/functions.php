@@ -60,8 +60,44 @@ function register(array $data): bool
     }
 
     $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
-     $stmt = $db->prepare("INSERT INTO users (name, email, password) VALUES (:name, :email, :password)");
+    $stmt = $db->prepare("INSERT INTO users (name, email, password) VALUES (:name, :email, :password)");
     $stmt->execute($data);
     $_SESSION['success'] = 'You have successfuly registered';
     return true;
+}
+
+function login(array $data): bool
+{
+    global $db;
+
+    $stmt = $db->prepare("SELECT * FROM users WHERE email = ?");
+    $stmt->execute([$data['email']]);
+
+    if($row = $stmt->fetch()) {
+        if(!password_verify($data['password'], $row['password'])) {
+            $_SESSION['errors'] = 'Wrong email or password';
+            return false;
+        }
+    } else {
+        $_SESSION['errors'] = 'Wrong email or password';
+        return false;
+    }
+
+    foreach($row as $key => $value) {
+        if($key != 'password') {
+            $_SESSION['user'][$key] = $value;
+        }
+    }
+    $_SESSION['success'] = 'You have successfuly logined';
+    return true;
+}
+
+function check_auth(): bool
+{
+    return isset($_SESSION['user']);
+}
+
+function check_admin(): bool
+{
+    return isset($_SESSION['user']) && $_SESSION['user']['role'] == 2;
 }
