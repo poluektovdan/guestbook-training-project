@@ -101,3 +101,31 @@ function check_admin(): bool
 {
     return isset($_SESSION['user']) && $_SESSION['user']['role'] == 2;
 }
+
+function save_message(array $data): bool
+{
+    global $db;
+
+    if (!check_auth()) {
+        $_SESSION['errors'] = 'Login is required';
+        return false;
+    }
+
+    $stmt = $db->prepare("INSERT INTO messages (user_id, message) VALUES (?, ?)");
+    $stmt->execute([$_SESSION['user']['id'], $data['message']]);
+    $_SESSION['success'] = 'Message added';
+    return true;
+}
+
+function get_messages(): array 
+{
+    global $db;
+
+    $where = '';
+    if(!check_admin()) {
+        $where .= 'WHERE status = 1';
+    }
+    $stmt = $db->prepare("SELECT m.id, m.user_id, m.message, m.status, DATE_FORMAT(m.created_at, '%d.%m.%Y %H:%i') AS created_at, users.name FROM messages m JOIN users ON users.id = m.user_id {$where}");
+    $stmt->execute();
+    return $stmt->fetchAll();
+}
